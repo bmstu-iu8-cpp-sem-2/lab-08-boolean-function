@@ -1,7 +1,9 @@
 # Лабораторная работа 8
 
 ## Задание
-Реализовать класс булевой функции от произвольного количества переменных.
+* Реализовать класс булевой функции от произвольного количества переменных;
+* Реализовать модульные тесты, используя Gtest;
+* Асимптотическая сложность нахождения АНФ должна быть N*logN;
 
 Интерфейс класса из файла `boolean_function.hpp`:
 
@@ -20,7 +22,7 @@ public:
 public:
 	static boolean_function var(size_t n, size_t dimension);
 	static boolean_function zero(size_t dimension);
-    static boolean_function one(size_t dimension);
+	static boolean_function one(size_t dimension);
 	static boolean_function from_anf(std::vector<value_type> v);
 
 	boolean_function();
@@ -81,4 +83,5 @@ bool operator != (const boolean_function& a, const boolean_function& b);
 ```
 Описание методов с примерами можно найти в файле `boolean_function.hpp`.
 
-Реализовать модульные тесты, используя Gtest.
+## Литература
+* Алгоритм быстрого поиска [АНФ](http://dha.spb.ru/PDF/AlgebraicNormalForm.pdf);
