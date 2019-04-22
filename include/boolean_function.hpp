@@ -78,7 +78,7 @@ public:
 
 	// true если функции равны
 	// иначе false
-	bool operator == (const boolean_function&) const;
+	bool operator == (const boolean_function& rhs) const;
 
 	// true если одна функция сравнима и больше или равна rhs
 	// false если сравнима и меньше rhs
@@ -115,12 +115,13 @@ public:
 	boolean_function operator()(const std::vector<boolean_function>& fs) const;
 	boolean_function operator()(const std::initializer_list<boolean_function> vars) const;
 
-	bool is_monotone() const;
-	bool is_symmetric() const;
-	bool is_linear() const;
-	bool is_T1() const;
-	bool is_T0() const;
-	bool is_balanced() const; //равновесная ли
+	bool is_monotone() const; // монотонная
+	bool is_selfdual() const; // самодвойственная
+	bool is_linear() const; // линейная
+	bool is_T1() const; // сохраняет единицу
+	bool is_T0() const; // сохраняет ноль
+	bool is_balanced() const; // равновесная
+	bool is_symmetric() const; // симметричная
 	size_t weight() const;
 
 	bool is_functionally_complete_system() const;
@@ -141,5 +142,7 @@ boolean_function operator | (const boolean_function& a, const boolean_function& 
 
 bool operator != (const boolean_function& a, const boolean_function& b);
 
+bool is_functionally_complete_system(const std::vector<boolean_function>& fs);
+bool is_functionally_complete_system(const std::initializer_list<boolean_function> vars);
 
 #endif // INCLUDE_BOOLEAN_FUNCTION_

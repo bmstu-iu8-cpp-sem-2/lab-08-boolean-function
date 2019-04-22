@@ -64,11 +64,12 @@ public:
 	boolean_function operator()(const std::initializer_list<boolean_function> vars) const;
 
 	bool is_monotone() const;
-	bool is_symmetric() const;
+	bool is_selfdual() const;
 	bool is_linear() const;
 	bool is_T1() const;
 	bool is_T0() const;
 	bool is_balanced() const;
+	bool is_symmetric() const;
 	size_t weight() const;
 
 	bool is_functionally_complete_system() const;
@@ -80,6 +81,9 @@ boolean_function operator + (const boolean_function& a, const boolean_function& 
 boolean_function operator * (const boolean_function& a, const boolean_function& b);
 boolean_function operator | (const boolean_function& a, const boolean_function& b);
 bool operator != (const boolean_function& a, const boolean_function& b);
+
+bool is_functionally_complete_system(const std::vector<boolean_function>& fs);
+bool is_functionally_complete_system(const std::initializer_list<boolean_function> vars);
 ```
 Описание методов с примерами можно найти в файле `boolean_function.hpp`.
 
