@@ -46,12 +46,37 @@ class boolean_function {
     return b;
   }
   // Тождественный ноль "от dimension переменных"
-  static boolean_function zero(size_t dimension);
+  static boolean_function zero(size_t dimension) {
+    boolean_function zer;
+    dimension = 1 << dimension;
+    zer.data.resize(dimension);
+    for (size_t i = 0; i < dimension; ++i) {
+      zer.data[i] = false;
+    }
+    return zer;
+  }
 
   // Тождественная единица "от dimension переменных"
-  static boolean_function one(size_t dimension);
+  static boolean_function one(size_t dimension) {
+    boolean_function on;
+    dimension = 1 << dimension;
+    on.data.resize(dimension);
+    for (size_t i = 0; i < dimension; ++i) {
+      on.data[i] = true;
+    }
+    return on;
+  }
 
-  static boolean_function from_anf(std::vector<value_type> v);
+  static boolean_function from_anf(std::vector<value_type> v) {
+    boolean_function a(v);
+    for (size_t i = 0; i < v.size(); ++i) {
+      a.data[i] = v[0];
+      for (size_t j = 0; j < v.size() - i; ++j) {
+        v[j] = v[j] ^ v[j + 1];
+      }
+    }
+    return a;
+  }
 
   boolean_function();
 
