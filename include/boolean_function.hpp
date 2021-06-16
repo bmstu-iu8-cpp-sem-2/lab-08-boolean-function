@@ -219,7 +219,7 @@ class boolean_function {
     }
     return n;
   }
-  cbool operator>=(const boolean_function& rhs) const {
+  bool operator>=(const boolean_function& rhs) const {
     if (size() != rhs.size()) throw std::logic_error("Error");
     if (weight() > rhs.weight()) {
       for (size_t i = 0; i < size(); ++i) {
