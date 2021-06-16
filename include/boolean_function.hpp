@@ -80,7 +80,6 @@ class boolean_function {
 
   boolean_function() { data.resize(0); }
 
-
   // Создаёт функцию тождественного нуля от n переменных
   explicit boolean_function(size_t n) {
     n = 1 << n;
@@ -117,7 +116,6 @@ class boolean_function {
         data[i] = false;
     }
   }
-
 
   // Создаёт функцию из вектора значений
   // пусть table = {true, false, false, true};
@@ -266,48 +264,239 @@ class boolean_function {
   // Возвращает значение функции на наборе значений переменных
   // пусть boolean_function задает функцию f(x, y, z)
   // тогда функция вернет f(vars[0], vars[1], vars[2])
-  bool operator()(const std::vector<bool>& vars) const;
-  bool operator()(const std::initializer_list<bool> vars) const;
+  bool operator()(const vector<bool>& vars) const {
+    size_t n = 0;
+    for (size_t i = 0; i < vars.size(); ++i) {
+      n += vars[vars.size() - i - 1] << i;
+    }
+    return data[n];
+  }
+
+  bool operator()(const initializer_list<bool> vars) const {
+    size_t n = 0, k = vars.size() - 1;
+    for (auto i : vars) {
+      n += i << k;
+      k--;
+    }
+    return data[n];
+  }
 
   // T(x1, x2, ..., xN) - текущая функция
   // operator вернет новую функцию, которая равна композиции G = T(fs[0], fs[1],
   // ..., fs[N-1])
-  boolean_function operator()(const std::vector<boolean_function>& fs) const;
+  boolean_function operator()(const vector<boolean_function>& fs) const {
+    boolean_function a(*this), b(a.dimension());
+    vector<bool> k;
+    for (size_t i = 0; i < a.size(); ++i) {
+      k.clear();
+      for (size_t j = 0; j < fs.size(); ++j) {
+        k.push_back(fs[j].data[i]);
+      }
+      b[i] = a(k);
+    }
+    return b;
+  }
+
   boolean_function operator()(
-      const std::initializer_list<boolean_function> vars) const;
+      const initializer_list<boolean_function> vars) const {
+    boolean_function a(*this), b(a.dimension());
+    vector<bool> k;
+    for (size_t i = 0; i < a.size(); ++i) {
+      k.clear();
+      for (auto j : vars) {
+        k.push_back(j.data[i]);
+      }
+      b[i] = a(k);
+    }
+    return b;
+  }
 
-  bool is_monotone() const;   // монотонная
-  bool is_selfdual() const;   // самодвойственная
-  bool is_linear() const;     // линейная
-  bool is_T1() const;         // сохраняет единицу
-  bool is_T0() const;         // сохраняет ноль
-  bool is_balanced() const;   // равновесная
-  bool is_symmetric() const;  // симметричная
-  size_t weight() const;
+  // монотонная
+  bool is_monotone() const {
+    boolean_function a(*this);
+    for (size_t i = 0; i < a.size(); ++i) {
+      for (size_t j = i + 1; j < a.size(); ++j) {
+        if (a[i] > a[j]) {
+          int t = 0, k = 0;
+          boolean_function z(i, dimension()), y(j, dimension());
+          while (z.data[i] > y.data[i]) {
+            t++;
+          }
+          while (z.data[j] < y.data[j]) {
+            k++;
+          }
+          if (i != size() && j != size()) return false;
+        }
+      }
+    }
+    return true;
+  }
+  // самодвойственная
+  bool is_selfdual() const {
+    for (size_t i = 0; i < data.size() / 2; ++i) {
+      if (data[i] == data[data.size() - i]) return false;
+    }
+    return true;
+  }
+  // линейная
+  bool is_linear() const {
+    if (!is_balanced()) return false;
+    size_t n = 0;
+    for (size_t i = 0; i < size(); ++i) {
+      if (data[i] == 1 && i != n) return false;
+      if (n <= i) n = n << 1;
+    }
+    return true;
+  }
+  bool is_T1() const { return data[data.size()] == 1; }
 
-  bool is_functionally_complete_system() const;
+  bool is_T0() const { return data[0] == 0; }
+
+  bool is_balanced() const { return (data.size() / 2) == weight(); }
+
+  bool is_symmetric() const {
+    for (size_t i = 0; i < data.size() / 2; ++i) {
+      if (data[i] != data[data.size() - i]) return false;
+    }
+    return true;
+  }
+
+  size_t weight() const {
+    size_t t = 0;
+    for (bool i : data) {
+      if (i) t++;
+    }
+    return t;
+  }
+
+  bool is_functionally_complete_system() const {
+    if (is_T0()) return false;
+    if (is_T1()) return false;
+    if (is_linear()) return false;
+    if (is_selfdual()) return false;
+    if (is_monotone()) return false;
+    return true;
+  }
 
   // Возвращает АНФ функции
-  std::vector<value_type> anf() const;
+  vector<value_type> anf() const {
+    boolean_function b(*this);
+    std::vector<value_type> a(size());
+    size_t n = size();
+    for (size_t i = 0; i < n; ++i) {
+      a[i] = b.data[0];
+      for (size_t j = 0; j < n - i; ++j) {
+        b.data[j] = b.data[j] ^ b.data[j + 1];
+      }
+    }
+    return a;
+  }
 };
 
 // Пусть boolean_function задаётся вектором значений "01110000"
 // тогда get_polynom вернет строку "x0 + x1 + x0x1 + x0x2 + x1x2 + x0x1x2"
-std::string get_polynom(const boolean_function&);
+string get_polynom(const boolean_function& a) {
+  vector<bool> k = a.anf();
+  string st;
+  for (size_t i = 0; i < a.size(); ++i) {
+    if (a[i] == 1) {
+      size_t t = i;
+
+      for (size_t j = 0; j < a.dimension(); ++j) {
+        if (static_cast<int>(t) >= (1 << (a.dimension() - j))) {
+          st += "x";
+          st += a.dimension() - j;
+          t -= 1 << (a.dimension() - j);
+        }
+      }
+      st += " + ";
+    }
+  }
+  return st;
+}
 
 boolean_function operator+(const boolean_function& a,
-                           const boolean_function& b);
+                           const boolean_function& b) {
+  boolean_function c = a;
+  c += b;
+  return c;
+}
 
 boolean_function operator*(const boolean_function& a,
-                           const boolean_function& b);
+                           const boolean_function& b) {
+  boolean_function c = a;
+  c *= b;
+  return c;
+}
 
 boolean_function operator|(const boolean_function& a,
-                           const boolean_function& b);
+                           const boolean_function& b) {
+  boolean_function c = a;
+  c |= b;
+  return c;
+}
 
-bool operator!=(const boolean_function& a, const boolean_function& b);
+bool operator!=(const boolean_function& a, const boolean_function& b) {
+  return !(a == b);
+}
 
-bool is_functionally_complete_system(const std::vector<boolean_function>& fs);
+bool is_functionally_complete_system(const vector<boolean_function>& fs) {
+  size_t n = 0;
+  for (const auto& f : fs) {
+    if (f.is_T0()) n++;
+  }
+  if (n == fs.size()) return false;
+  n = 0;
+  for (const auto& f : fs) {
+    if (f.is_T1()) n++;
+  }
+  if (n == fs.size()) return false;
+  n = 0;
+  for (const auto& f : fs) {
+    if (f.is_selfdual()) n++;
+  }
+  if (n == fs.size()) return false;
+  n = 0;
+  for (const auto& f : fs) {
+    if (f.is_monotone()) n++;
+  }
+  if (n == fs.size()) return false;
+  n = 0;
+  for (const auto& f : fs) {
+    if (f.is_linear()) n++;
+  }
+  if (n == fs.size()) return false;
+  return true;
+}
+
 bool is_functionally_complete_system(
-    const std::initializer_list<boolean_function> vars);
+    const initializer_list<boolean_function> vars) {
+  size_t n = 0;
+  for (const auto& f : vars) {
+    if (f.is_T0()) n++;
+  }
+  if (n == vars.size()) return false;
+  n = 0;
+  for (const auto& f : vars) {
+    if (f.is_T1()) n++;
+  }
+  if (n == vars.size()) return false;
+  n = 0;
+  for (const auto& f : vars) {
+    if (f.is_selfdual()) n++;
+  }
+  if (n == vars.size()) return false;
+  n = 0;
+  for (const auto& f : vars) {
+    if (f.is_monotone()) n++;
+  }
+  if (n == vars.size()) return false;
+  n = 0;
+  for (const auto& f : vars) {
+    if (f.is_linear()) n++;
+  }
+  if (n == vars.size()) return false;
+  return true;
+}
 
-#endif  // INCLUDE_BOOLEAN_FUNCTION_
+#endif  // INCLUDE_BOOLEAN_FUNCTION_HPP_
