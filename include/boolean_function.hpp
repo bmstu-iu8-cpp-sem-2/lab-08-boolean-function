@@ -158,7 +158,7 @@ class boolean_function {
   // Сложение по модулю 2
   // если разное количество переменных - исключение
   boolean_function& operator+=(const boolean_function& rhs) {
-    if (data.size() != rhs.data.size()) throw std::invalid_argument("Fuck");
+    if (data.size() != rhs.data.size()) throw std::invalid_argument("Error");
     for (size_t i = 0; i < data.size(); ++i) {
       data[i] = (data[i] + rhs.data[i]) % 2;
     }
@@ -167,41 +167,101 @@ class boolean_function {
 
   // Конъюнкция
   // если разное количество переменных - исключение
-  boolean_function& operator*=(const boolean_function& rhs);
+  boolean_function& operator*=(const boolean_function& rhs) {
+    if (data.size() != rhs.data.size()) throw std::invalid_argument("Error");
+    for (size_t i = 0; i < data.size(); ++i) {
+      data[i] = data[i] & rhs.data[i];
+    }
+    return *this;
+  }
 
   // Дизъюнкция
   // если разное количество переменных - исключение
-  boolean_function& operator|=(const boolean_function& rhs);
+  boolean_function& operator|=(const boolean_function& rhs) {
+    if (data.size() != rhs.data.size()) throw std::invalid_argument("Error");
+    for (size_t i = 0; i < data.size(); ++i) {
+      data[i] = data[i] | rhs.data[i];
+    }
+    return *this;
+  }
 
   // Побитовое отрицание
-  boolean_function operator~();
+  boolean_function operator~() {
+    for (auto&& i : data) {
+      i = !i;
+    }
+    return *this;
+  }
 
   // true если функции равны
   // иначе false
-  bool operator==(const boolean_function& rhs) const;
+  bool operator==(const boolean_function& rhs) const {
+    if (data.size() != rhs.data.size()) return false;
+    for (size_t i = 0; i < data.size(); ++i) {
+      if (data[i] != rhs.data[i]) return false;
+    }
+    return true;
+  }
 
   // true если одна функция сравнима и больше или равна rhs
   // false если сравнима и меньше rhs
   // logic_error если фунции не сравнимы
-  bool operator>=(const boolean_function& rhs) const;
+  bool operator==(const vector<value_type>& rhs) const {
+    if (data.size() != rhs.size()) return false;
+    for (size_t i = 0; i < data.size(); ++i) {
+      if (data[i] != rhs[i]) return false;
+    }
+    return true;
+  }
 
-  reference operator[](size_type ind);
-  const_reference operator[](size_type ind) const;
+  size_t weight() {
+    size_t n = 0;
+    for (size_t i = 0; i < size(); ++i) {
+      if (data[i] == 1) n++;
+    }
+    return n;
+  }
+  cbool operator>=(const boolean_function& rhs) const {
+    if (size() != rhs.size()) throw std::logic_error("Error");
+    if (weight() > rhs.weight()) {
+      for (size_t i = 0; i < size(); ++i) {
+        if (data[i] == 0 && rhs.data[i] == 1) throw std::logic_error("Error");
+      }
+    } else {
+      for (size_t i = 0; i < size(); ++i) {
+        if (data[i] == 1 && rhs.data[i] == 0) throw std::logic_error("Error");
+      }
+    }
+    for (size_t i = 0; i < size(); ++i) {
+      if (data[i] < rhs.data[i]) return false;
+    }
+    return true;
+  }
 
-  reference at(size_type ind);
-  const_reference at(size_type ind) const;
+  reference operator[](size_type ind) { return data[ind]; }
 
-  iterator begin();
-  iterator end();
+  const_reference operator[](size_type ind) const { return data[ind]; }
 
-  const_iterator cbegin() const;
-  const_iterator cend() const;
+  reference at(size_type ind) { return data.at(ind); }
 
+  const_reference at(size_type ind) const { return data.at(ind); }
+  iterator begin() { return data.begin(); }
+
+  iterator end() { return data.end(); }
+
+  const_iterator cbegin() const { return data.begin(); }
+
+  const_iterator cend() const { return data.end(); }
   // Длина столбца функции
-  size_type size() const throw();
+  size_type size() const noexcept { return data.size(); }
 
   // Количество переменных
-  size_type dimension() const throw();
+  size_type dimension() const noexcept {
+    size_t n = data.size();
+    size_t i = 0;
+    while (n >> i != 1) i++;
+    return i;
+  }
 
   // Возвращает значение функции на наборе значений переменных
   // пусть boolean_function задает функцию f(x, y, z)
