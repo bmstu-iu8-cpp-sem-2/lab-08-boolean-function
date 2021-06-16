@@ -78,34 +78,92 @@ class boolean_function {
     return a;
   }
 
-  boolean_function();
+  boolean_function() { data.resize(0); }
+
 
   // Создаёт функцию тождественного нуля от n переменных
-  boolean_function(size_t n);
+  explicit boolean_function(size_t n) {
+    n = 1 << n;
+    data.resize(n);
+    for (size_t i = 0; i < n; ++i) {
+      data[i] = false;
+    }
+  }
 
   // Создаёт функцию от n переменных. Вектор значений представляется числом
   // value Пример: пусть value = 14, т.е. 0...00001110 в двоичной системе а n =
   // 3 тогда АНФ boolean_function будет равна x + y + xy + zx + zy + zyx
-  boolean_function(unsigned long long value, size_type n);
+  boolean_function(size_t value, size_type n) {
+    n = 1 << n;
+    data.resize(n);
+    for (size_t i = 0; i < n; ++i) {
+      if (static_cast<int>(value) >= (1 << (n - i - 1))) {
+        data[i] = true;
+        value -= 1 << (n - i - 1);
+      }
+    }
+  }
 
   // Создаёт функцию из строки, содержащей вектор значений
   // пусть table = "01110000"
   // тогда АНФ boolean_function будет равна x + y + xy + zx + zy + zyx
-  boolean_function(const std::string& table);
+  explicit boolean_function(const string& table) {
+    size_t n = table.size();
+    data.resize(n);
+    for (size_t i = 0; i < n; ++i) {
+      if (table[i] == '1')
+        data[i] = true;
+      else
+        data[i] = false;
+    }
+  }
+
 
   // Создаёт функцию из вектора значений
   // пусть table = {true, false, false, true};
   // тогда АНФ boolean_function будет равна x + y + 1
-  boolean_function(const std::vector<value_type>& table);
-  boolean_function(const std::initializer_list<bool> vars);
+  explicit boolean_function(const vector<value_type>& table) {
+    size_t n = table.size();
+    data.resize(n);
+    for (size_t i = 0; i < n; i++) {
+      data[i] = static_cast<bool>(table[i]);
+    }
+  }
+  explicit boolean_function(const initializer_list<bool> vars) {
+    size_t n = vars.size(), t = 0;
+    data.resize(n);
+    for (auto i : vars) {
+      data[t] = i;
+      t++;
+    }
+  }
 
-  boolean_function(const boolean_function& table);
+  boolean_function(const boolean_function& table) {
+    size_t n = table.data.size();
+    data.resize(n);
+    for (size_t i = 0; i < n; ++i) {
+      data[i] = table.data[i];
+    }
+  }
 
-  boolean_function& operator=(const boolean_function& rhs);
+  boolean_function& operator=(const boolean_function& rhs) {
+    size_t n = rhs.data.size();
+    data.resize(n);
+    for (size_t i = 0; i < n; ++i) {
+      data[i] = rhs.data[i];
+    }
+    return *this;
+  }
 
   // Сложение по модулю 2
   // если разное количество переменных - исключение
-  boolean_function& operator+=(const boolean_function& rhs);
+  boolean_function& operator+=(const boolean_function& rhs) {
+    if (data.size() != rhs.data.size()) throw std::invalid_argument("Fuck");
+    for (size_t i = 0; i < data.size(); ++i) {
+      data[i] = (data[i] + rhs.data[i]) % 2;
+    }
+    return *this;
+  }
 
   // Конъюнкция
   // если разное количество переменных - исключение
