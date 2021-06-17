@@ -81,7 +81,7 @@ TEST(BooleanFunction, Operators)
     vecOfBF.push_back(boolean_function(vec));
     vec1 = {1, 0, 1, 1, 0, 0, 1, 1};
     std::vector<bool> vec2 = {0, 1, 1, 1, 1, 1, 1, 1};
-    //EXPECT_TRUE(boolean_function (vec1)(vecOfBF) == boolean_function(vec2));
+    EXPECT_TRUE(boolean_function (vec1)(vecOfBF) == boolean_function(vec2));
 }
 
 TEST(BooleanFunction, Anf)
